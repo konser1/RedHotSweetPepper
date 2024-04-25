@@ -424,5 +424,101 @@ namespace NavMeshPlus.Components.Editors
             AssetDatabase.Refresh();
             Debug.Log("NavMesh Export Success");
         }
+[MenuItem("LayaAir3D/NavMesh/Export3")]
+    static void LayaAir3DExport()
+    {
+        UnityEngine.Debug.Log("CreatePolyNavMesh Start");
+        CreatePolyNavMesh();
+        UnityEngine.Debug.Log("CreatePolyNavMesh End");
+    }
+          private static void CreatePolyNavMesh()
+        {
+            UnityEngine.AI.NavMeshTriangulation triangulatedWalkNavMesh = Path1();
+            string path = System.Environment.CurrentDirectory.Replace("\\", "/") + "/Config/NavMeshBuild/";
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            float startX = 0f;
+            float startZ = 0f;
+            float endX = 500f;
+            float endZ = 500f;
+            
+            StringBuilder sb = new StringBuilder("{");
+            sb.Append("\"mapID\":").Append(001);
+            sb.Append(",\"startX\":").Append(startX).Append(",\"startZ\":").Append(startZ);
+            sb.Append(",\"endX\":").Append(endX).Append(",\"endZ\":").Append(endZ);
+            string filename = path +  "001.navmesh";
+
+            string data = "";
+            data = PathMeshToString(triangulatedWalkNavMesh);
+            sb.Append(",").Append(data);
+            sb.Append("}");
+            MeshToFile(filename, sb.ToString());
+        }
+        
+        /// <summary>
+        /// 计算行走层三角网格
+        /// </summary>
+        /// <returns></returns>
+        private static UnityEngine.AI.NavMeshTriangulation Path1()
+        {
+            UnityEditor.AI.NavMeshBuilder.ClearAllNavMeshes();
+            UnityEditor.AI.NavMeshBuilder.BuildNavMesh();
+            UnityEngine.AI.NavMeshTriangulation triangulatedNavMesh = UnityEngine.AI.NavMesh.CalculateTriangulation();
+            return triangulatedNavMesh;
+        }
+        
+        /// <summary>
+        /// 寻路数据转换为字符串
+        /// </summary>
+        /// <param name="mesh"></param>
+        /// <returns></returns>
+        private static string PathMeshToString(UnityEngine.AI.NavMeshTriangulation mesh)
+        {
+            if (mesh.indices.Length < 1)
+            {
+                return "";
+            }
+
+            float scalar = 1f;
+            float offsetX = 51f;
+            float offsetY = 38f;
+            StringBuilder sb = new StringBuilder();
+            sb.Append( "\"pathTriangles\":[");
+            foreach (var t in mesh.indices)
+            {
+                sb.Append(t).Append(",");
+            }
+            sb.Length--;
+            sb.Append("],");
+
+            sb.Append("\"pathVertices\":[");
+            for (int i = 0; i < mesh.vertices.Length; i++)
+            {
+                Vector3 v = mesh.vertices[i];
+                var vX = v.x+offsetX;
+                var vY = 0f;
+                var vZ = v.y+offsetY;
+                
+                vX *= scalar;
+                vY *= scalar;
+                vZ *= scalar;
+                
+                sb.Append("{\"x\":").Append(vX).Append(",\"y\":").Append(vY).Append(",\"z\":").Append(vZ).Append("},");
+                // sb.Append("{\"x\":").Append(v.x).Append(",\"y\":").Append(v.y).Append(",\"z\":").Append(v.z).Append("},");
+            }
+            sb.Length--;
+            sb.Append("]");
+            return sb.ToString();
+        }
+        
+        static void MeshToFile(string filename, string meshData)
+        {
+            using (StreamWriter sw = new StreamWriter(filename))
+            {
+                sw.Write(meshData);
+            }
+        }
     }
 }
