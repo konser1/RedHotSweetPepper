@@ -391,5 +391,38 @@ namespace NavMeshPlus.Components.Editors
             if (view != null)
                 view.MoveToView(go.transform);
         }
+
+        [MenuItem("LayaAir3D/NavMesh/Export2")]
+        static void LayaAir3DExportV2()
+        {
+            Debug.Log("NavMesh Export Start");
+            NavMeshTriangulation navMeshTriangulation = NavMesh.CalculateTriangulation();
+            if (!Directory.Exists(Application.dataPath + "/ExportNavMesh"))
+            {
+                Directory.CreateDirectory(Application.dataPath + "/ExportNavMesh");//不存在就创建目录
+            }
+            //文件路径
+            string path = Application.dataPath + "/ExportNavMesh/test.obj";
+            //新建文件
+            StreamWriter streamWriter = new StreamWriter(path);
+            //顶点  
+            for (int i = 0; i < navMeshTriangulation.vertices.Length; i++)
+            {
+                // streamWriter.WriteLine("v  " + (-1 * navMeshTriangulation.vertices[i].x) + " " + navMeshTriangulation.vertices[i].y + " " + navMeshTriangulation.vertices[i].z);
+                // streamWriter.WriteLine("v  " + (-1 * navMeshTriangulation.vertices[i].x) + " " + navMeshTriangulation.vertices[i].z + " " + navMeshTriangulation.vertices[i].y);
+                streamWriter.WriteLine("v  " + (-1 * navMeshTriangulation.vertices[i].x) + " " + 0 + " " + navMeshTriangulation.vertices[i].y);
+            }
+            streamWriter.WriteLine("g pPlane1");
+            //索引  
+            for (int i = 0; i < navMeshTriangulation.indices.Length;)
+            {
+                streamWriter.WriteLine("f " + (navMeshTriangulation.indices[i] + 1) + " " + (navMeshTriangulation.indices[i + 1] + 2) + " " + (navMeshTriangulation.indices[i + 1] + 1));
+                i = i + 3;
+            }
+            streamWriter.Flush();
+            streamWriter.Close();
+            AssetDatabase.Refresh();
+            Debug.Log("NavMesh Export Success");
+        }
     }
 }
